@@ -33,16 +33,16 @@ func bootstrap(
 	lifecycle fx.Lifecycle,
 	database config.Database,
 	router config.Router,
-	seed config.Seed,
 	routes routes.Routes,
 	migrations config.Migrations,
+	env *lib.Env,
 ) {
 	lifecycle.Append(
 		fx.Hook{
 			OnStart: func(context.Context) error {
 				migrations.Migrate()
 				routes.Setup()
-				go router.Run()
+				go router.Run(":" + env.ServerPort)
 				return nil
 			},
 		},

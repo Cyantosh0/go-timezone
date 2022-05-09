@@ -8,6 +8,7 @@ import (
 )
 
 type Env struct {
+	ServerPort         string `mapstructure:"SERVER_PORT"`
 	DBHost             string `mapstructure:"DB_HOST"`
 	DBPort             string `mapstructure:"DB_PORT"`
 	DBName             string `mapstructure:"DB_NAME"`
@@ -40,7 +41,7 @@ func NewEnv() *Env {
 
 	err = viper.Unmarshal(&globalEnv)
 	if err != nil {
-		panic(fmt.Sprintf("environment cant be loaded: ", err))
+		panic(fmt.Sprintf("environment cant be loaded: %v", err))
 	}
 
 	return &globalEnv
