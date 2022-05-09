@@ -1,9 +1,12 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Cyantosh0/gorm-crud/api/repositories"
+	"github.com/Cyantosh0/gorm-crud/constants"
 	"github.com/Cyantosh0/gorm-crud/lib"
 	"github.com/Cyantosh0/gorm-crud/models"
 	"github.com/gin-gonic/gin"
@@ -83,8 +86,37 @@ func (u UserController) RetrieveUser(c *gin.Context) {
 }
 
 func (u UserController) GellAllUsers(c *gin.Context) {
+	today := c.Query("today")
+	date := c.Query("date")
+	fromDate := c.Query("fromDate")
+	toDate := c.Query("toDate")
+
 	var users []models.User
-	err := u.repository.Find(&users).Error
+
+	chain := u.repository.Model(&models.User{})
+	fmt.Println("TIME>>", time.Now())
+	if today == "true" {
+		chain = chain.Where("created_at >= ? AND created_at <= ?", time.Now().Format(constants.ISOFormat), time.Now().AddDate(0, 0, 1).Format(constants.ISOFormat))
+	} else {
+		d, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
+			return
+		}
+
+		if date != "" {
+			chain = chain.Where("created_at >= ? AND created_at <= ?", date, d.AddDate(0, 0, 1))
+		} else {
+			if fromDate != "" {
+				chain = chain.Where("created_at >= ?", fromDate)
+			}
+			if toDate != "" {
+				chain = chain.Where("created_at <= ?", toDate)
+			}
+		}
+	}
+
+	err := chain.Find(&users).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
