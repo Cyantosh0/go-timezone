@@ -13,7 +13,6 @@ require (
 	github.com/spf13/viper v1.10.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/fx v1.16.0
-	go.uber.org/zap v1.17.0
 	gorm.io/driver/mysql v1.2.3
 	gorm.io/gorm v1.22.5
 )

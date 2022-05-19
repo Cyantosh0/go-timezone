@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -91,21 +90,23 @@ func (u UserController) GellAllUsers(c *gin.Context) {
 	fromDate := c.Query("fromDate")
 	toDate := c.Query("toDate")
 
+	timeZone := c.Query("timeZone")
+
 	var users []models.User
 
 	chain := u.repository.Model(&models.User{})
-	fmt.Println("TIME>>", time.Now())
-	if today == "true" {
-		chain = chain.Where("created_at >= ? AND created_at <= ?", time.Now().Format(constants.ISOFormat), time.Now().AddDate(0, 0, 1).Format(constants.ISOFormat))
-	} else {
-		d, err := time.Parse("2006-01-02", date)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err})
-			return
-		}
 
+	if today == "true" {
+		chain = chain.Where("convert_tz(created_at,'UTC',?) >= ? AND convert_tz(created_at,'UTC',?) <= ?", timeZone, time.Now().Format(constants.ISOFormat), timeZone, time.Now().AddDate(0, 0, 1).Format(constants.ISOFormat))
+	} else {
 		if date != "" {
-			chain = chain.Where("created_at >= ? AND created_at <= ?", date, d.AddDate(0, 0, 1))
+			d, err := time.Parse("2006-01-02T15:04:05.000Z", date)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err})
+				return
+			}
+
+			chain = chain.Where("convert_tz(created_at,'UTC',?) >= ? AND convert_tz(created_at,'UTC',?) <= ?", timeZone, date, timeZone, d.AddDate(0, 0, 1))
 		} else {
 			if fromDate != "" {
 				chain = chain.Where("created_at >= ?", fromDate)
