@@ -89,7 +89,6 @@ func (u UserController) GellAllUsers(c *gin.Context) {
 	date := c.Query("date")
 	fromDate := c.Query("fromDate")
 	toDate := c.Query("toDate")
-
 	timeZone := c.Query("timeZone")
 
 	var users []models.User
@@ -97,16 +96,20 @@ func (u UserController) GellAllUsers(c *gin.Context) {
 	chain := u.repository.Model(&models.User{})
 
 	if today == "true" {
-		chain = chain.Where("convert_tz(created_at,'UTC',?) >= ? AND convert_tz(created_at,'UTC',?) <= ?", timeZone, time.Now().Format(constants.ISOFormat), timeZone, time.Now().AddDate(0, 0, 1).Format(constants.ISOFormat))
+		chain = chain.Where("created_at >= ? AND created_at <= ?", time.Now().Format(constants.ISOFormat), time.Now().AddDate(0, 0, 1).Format(constants.ISOFormat))
 	} else {
 		if date != "" {
-			d, err := time.Parse("2006-01-02T15:04:05.000Z", date)
+			loc, _ := time.LoadLocation(timeZone)
+			d, err := time.ParseInLocation("2006-01-02", date, loc)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err})
 				return
 			}
 
-			chain = chain.Where("convert_tz(created_at,'UTC',?) >= ? AND convert_tz(created_at,'UTC',?) <= ?", timeZone, date, timeZone, d.AddDate(0, 0, 1))
+			loc, _ = time.LoadLocation("UTC")
+			d = d.In(loc)
+
+			chain = chain.Where("created_at >= ? AND created_at <= ?", d, d.AddDate(0, 0, 1))
 		} else {
 			if fromDate != "" {
 				chain = chain.Where("created_at >= ?", fromDate)
